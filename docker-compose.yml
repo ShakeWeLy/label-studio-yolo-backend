@@ -15,8 +15,7 @@ services:
       - PYTHONPATH=/app
       - MODEL_DIR=./models  # 用于标注的model
       - MODEL_FILENAME=best.pt
-      - DATASET_DIR=/data/dataset
-      - MODEL_PATH=./models/best.pt  # 没有默认使用yolov11
+      - DATASET_DIR=/data/dataset  # 训练数据目录
 
       # Train_config
       - TRAIN_EPOCHS=10
@@ -35,8 +34,8 @@ services:
       - "9090:9090"
     volumes:
       - "./data/server:/data"
-      # 添加数据目录挂载，将Windows主机的数据目录挂载到容器内
-      # - "{Your dataset path}:/data/dataset"
+      - "./models:/app/models"  # 挂载模型目录
+      # 方便查看效果
       - "F:/_Work/data_/haoyi/dataset:/data/dataset"
 
     develop:

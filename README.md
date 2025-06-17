@@ -16,12 +16,6 @@ This backend provides ML-assisted labeling capabilities to accelerate your annot
 
 - **requirements.txt**: The list of Python dependencies for the backend.
 
-- **test_docker_mount.py**: Docker挂载测试脚本，用于验证数据目录挂载是否正常。
-
-- **start_with_test.py**: 智能启动脚本，自动测试挂载并启动服务。
-
-- **fix_docker_mount.py**: Docker挂载修复脚本，自动检测和修复常见的挂载问题。
-
 ## 🚀 Quick Start
 
 ### 方法一：使用智能启动脚本（推荐）
@@ -42,6 +36,7 @@ This backend provides ML-assisted labeling capabilities to accelerate your annot
      - "./data/server:/data"
      # 将Windows主机的数据目录挂载到容器内
      - "F:/_Work/data_/haoyi/dataset:/data/dataset"
+     - "./models:/app/models"  # 挂载模型目录
    ```
 
 3. **运行智能启动脚本:**
@@ -81,6 +76,7 @@ This backend provides ML-assisted labeling capabilities to accelerate your annot
      - "./data/server:/data"
      # 将Windows主机的数据目录挂载到容器内
      - "F:/_Work/data_/haoyi/dataset:/data/dataset"
+     - "./models:/app/models"  # 挂载模型目录
    ```
    
    **注意事项:**
@@ -96,23 +92,30 @@ This backend provides ML-assisted labeling capabilities to accelerate your annot
     LOG_LEVEL=DEBUG
 
     MODEL_FILENAME=model.pt
+    MODEL_DIR=/app/models
 
     PORT=8080
 
+    LABEL_STUDIO_URL=http://host.docker.internal:8080
     LABEL_STUDIO_API_KEY= # API key from LS
     TASK_TYPE=segmentation # segmentation or detection
+    
+    # 训练参数
+    TRAIN_EPOCHS=10
+    TRAIN_IMGSZ=640
+    TRAIN_BATCH_SIZE=16
     ```
 
-5. **测试Docker挂载:**
+5. **测试Label Studio集成:**
    
-   在启动服务前，可以先测试挂载是否正常：
+   在启动服务前，可以先测试Label Studio连接：
    
    ```bash
-   # 构建镜像
-   docker build -t yolo-backend .
+   # 测试Label Studio集成
+   python test_labelstudio_integration.py
    
-   # 测试挂载
-   docker run --rm -v "F:/_Work/data_/haoyi/dataset:/data/dataset" yolo-backend python test_docker_mount.py
+   # 测试图像下载功能
+   python test_image_download.py
    ```
 
 6. **Deploy using the following command:**
@@ -136,22 +139,25 @@ This backend provides ML-assisted labeling capabilities to accelerate your annot
 
   ![Example annotation](https://github.com/seblful/label-studio-yolo-backend/raw/main/assets/images/annotation.png)
 
-## 🔧 故障排除
 
-### Docker挂载问题
-
-如果遇到"图像目录为空"的错误，请检查：
-
-1. **Docker Desktop设置:**
-   - 打开Docker Desktop
-   - 进入 Settings > Resources > File Sharing
-   - 确保包含数据目录的驱动器已启用共享
-
-2. **路径格式:**
-   - Windows路径使用正斜杠: `F:/_Work/data_/haoyi/dataset`
-   - 避免使用反斜杠: `F:\_Work\data_\haoyi\dataset`
-
-3. **目录结构:**
+### 类别名称获取
+系统支持多种方式获取类别名称，按优先级排序：
+1. **classes.txt文件**（最高优先级）
+   ```
+   product
+   product_red
+   ```
+2. **notes.json文件**
+   ```json
+   {
+     "categories": [
+       {"id": 0, "name": "product"},
+       {"id": 1, "name": "product_red"}
+     ]
+   }
+   ```
+   
+### **目录结构:**
    ```
    F:/_Work/data_/haoyi/dataset/
    ├── train/
@@ -165,50 +171,6 @@ This backend provides ML-assisted labeling capabilities to accelerate your annot
    │       └── ...
    └── data.yaml (可选，会自动生成)
    ```
-
-4. **权限问题:**
-   - 确保Docker有权限访问数据目录
-   - 检查目录和文件的读取权限
-
-### 测试挂载
-
-使用提供的测试脚本验证挂载：
-
-```bash
-# 在容器中运行测试
-docker run --rm -v "F:/_Work/data_/haoyi/dataset:/data/dataset" yolo-backend python test_docker_mount.py
-```
-
-### 自动修复挂载问题
-
-如果遇到挂载问题，可以使用自动修复脚本：
-
-```bash
-# 运行修复脚本
-python fix_docker_mount.py
-```
-
-此脚本会：
-- 检查Docker状态
-- 验证数据目录结构
-- 修复docker-compose.yml配置
-- 测试挂载功能
-- 提供详细的错误诊断
-
-### 常见错误及解决方案
-
-1. **"图像目录为空"错误:**
-   - 检查Docker挂载配置
-   - 确认数据目录路径正确
-   - 验证Docker Desktop共享驱动器设置
-
-2. **"数据集目录不存在"错误:**
-   - 检查Windows主机上的数据目录是否存在
-   - 确认路径格式正确（使用正斜杠）
-
-3. **"无法访问目录内容"错误:**
-   - 检查目录权限
-   - 确认Docker有足够权限访问数据目录
 
 ### For users with internet restrictions:
   
