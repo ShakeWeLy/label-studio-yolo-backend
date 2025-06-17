@@ -1,6 +1,6 @@
 services:
   yolo:
-    container_name: yolo
+    container_name: yolo_train
     build:
       context: .
     environment:
@@ -9,21 +9,34 @@ services:
       - BASIC_AUTH_PASS=${BASIC_AUTH_PASS}
 
       # Log level
-      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_LEVEL=INFO
 
       # Paths
       - PYTHONPATH=/app
-      - MODEL_DIR=./models
-      - MODEL_FILENAME=${MODEL_FILENAME}
+      - MODEL_DIR=./models  # 用于标注的model
+      - MODEL_FILENAME=best.pt
+      - DATASET_DIR=/data/dataset  # 训练数据目录
 
-      - LABEL_STUDIO_URL=http://host.docker.internal:${PORT}
-      - LABEL_STUDIO_API_KEY=${LABEL_STUDIO_API_KEY}
-      - TASK_TYPE=${TASK_TYPE}
+      # Train_config
+      - TRAIN_EPOCHS=10
+      - TRAIN_IMGSZ=640
+      - TRAIN_BATCH_SIZE=16
+
+
+#      - LABEL_STUDIO_URL=http://host.docker.internal:${PORT}
+      - LABEL_STUDIO_URL=http://host.docker.internal:8080
+
+      - TASK_TYPE=detection
+      - LABEL_STUDIO_API_KEY=525b8630bc21a49ceb6d4b0d063edd22d66d932e
+      - TASK_TYPE=detection
 
     ports:
       - "9090:9090"
     volumes:
       - "./data/server:/data"
+      - "./models:/app/models"  # 挂载模型目录
+      # 方便查看效果
+      - "F:/_Work/data_/haoyi/dataset:/data/dataset"
 
     develop:
       watch:
